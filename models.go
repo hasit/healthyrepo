@@ -34,11 +34,7 @@ type Health struct {
 				PerMonth string `json:"per_month"`
 			} `json:"open_vs_closed"`
 		} `json:"issues"`
-		License struct {
-			Exists bool   `json:"exists"`
-			URL    string `json:"url"`
-			Name   string `json:"name"`
-		} `json:"license"`
+		License      License `json:"license"`
 		PullRequests struct {
 			TotalPullRequests  string `json:"total_pull_requests"`
 			MergedPullRequests string `json:"merged_pull_requests"`
@@ -47,11 +43,19 @@ type Health struct {
 				PerMonth string `json:"per_month"`
 			} `json:"sent_vs_merged"`
 		} `json:"pull_requests"`
-		Readme struct {
-			Exists bool   `json:"exists"`
-			URL    string `json:"url"`
-		} `json:"readme"`
+		Readme Readme `json:"readme"`
 	} `json:"indicators"`
+}
+
+type Readme struct {
+	Exists bool   `json:"exists"`
+	URL    string `json:"url"`
+}
+
+type License struct {
+	Exists bool   `json:"exists"`
+	URL    string `json:"url"`
+	Name   string `json:"name"`
 }
 
 type Indicator struct {
