@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/facebookgo/grace/gracehttp"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
@@ -21,5 +22,7 @@ func main() {
 	e.GET("/github.com/:owner/:repo/health", h.getGithubRepoHealth)
 	e.GET("/indicators", h.getIndicators)
 
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Server.Addr = ":1323"
+
+	e.Logger.Fatal(gracehttp.Serve(e.Server))
 }
