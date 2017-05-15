@@ -3,10 +3,10 @@ info:
   description: API for checking health of open source repositories.
   version: 0.1.0
   title: HealthyRepo API
-host: healthyrepo.com
-basePath: /api
+host: localhost:1323
 schemes:
   - https
+  - http
 produces:
   - application/json
 paths:
@@ -24,7 +24,7 @@ paths:
           description: Error
           schema:
             $ref: '#/definitions/Error'
-  '/health/{owner}/{repo}':
+  '/github.com/{owner}/{repo}/health':
     get:
       description: Returns the health of a repository
       parameters:
@@ -38,6 +38,13 @@ paths:
           description: Name of the repository
           type: string
           required: true
+        - name: indicators
+          in: query
+          description: Indicators to return
+          type: array
+          items:
+            type: string
+          required: false
       responses:
         '200':
           description: Get health of repository
@@ -52,11 +59,20 @@ definitions:
   Health:
     type: object
     properties:
+      repository_owner:
+        description: Owner of the repository.
+        type: string
+      repository_name:
+        description: Name of the repository.
+        type: string
+      repository_full_name: 
+        description: Full name of the repository, i.e. owner/reponame.
+        type: string
       repository_url:
         description: URL of the repository.
         type: string
-      repository_name:
-        description: Full name of the repository.
+      timestamp:
+        description: Timestamp of when the request was made.
         type: string
       indicators:
         $ref: '#/definitions/Indicators'
