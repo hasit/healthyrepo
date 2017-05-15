@@ -18,7 +18,7 @@ func main() {
 
 	e.File("/favicon.ico", "images/favicon.png")
 
-	e.GET("/repo/:owner/:repo/health", h.getRepoHealth)
+	e.GET("/github.com/:owner/:repo/health", h.getGithubRepoHealth)
 	e.GET("/indicators", h.getIndicators)
 
 	e.Logger.Fatal(e.Start(":1323"))

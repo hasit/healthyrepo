@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-func (h *Handler) getRepoHealth(c echo.Context) error {
+func (h *Handler) getGithubRepoHealth(c echo.Context) error {
 	db := h.DB.Clone()
 	defer db.Close()
 
