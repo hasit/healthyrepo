@@ -19,7 +19,7 @@ func (h *Handler) getGithubRepoHealth(c echo.Context) error {
 
 	health := &Health{
 		RepositoryName: fmt.Sprintf("%s/%s", owner, repo),
-		RepositoryURL:  fmt.Sprintf("github.com/%s/%s", owner, repo),
+		RepositoryURL:  fmt.Sprintf("https://github.com/%s/%s", owner, repo),
 		Timestamp:      time.Now(),
 	}
 
