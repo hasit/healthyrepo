@@ -104,12 +104,12 @@ func (h *Handler) getIndicators(c echo.Context) error {
 
 	i := db.DB("healthyrepo").C("indicators")
 
-	result := []Indicator{}
+	indicators := []Indicator{}
 
-	err := i.Find(nil).All(&result)
+	err := i.Find(nil).All(&indicators)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, indicators)
 }
