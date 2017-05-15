@@ -1,0 +1,185 @@
+swagger: '2.0'
+info:
+  description: API for checking health of open source repositories.
+  version: 0.1.0
+  title: HealthyRepo API
+host: healthyrepo.com
+basePath: /api
+schemes:
+  - https
+produces:
+  - application/json
+paths:
+  /indicators:
+    get:
+      description: Returns a list of health indicators supported by HealthyRepo
+      responses:
+        '200':
+          description: Get a list of health indicators
+          schema:
+            type: array
+            items:
+              type: string
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/Error'
+  '/health/{owner}/{repo}':
+    get:
+      description: Returns the health of a repository
+      parameters:
+        - name: owner
+          in: path
+          description: Owner of the repository
+          type: string
+          required: true
+        - name: repo
+          in: path
+          description: Name of the repository
+          type: string
+          required: true
+      responses:
+        '200':
+          description: Get health of repository
+          schema:
+            items:
+              $ref: '#/definitions/Health'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/Error'
+definitions:
+  Health:
+    type: object
+    properties:
+      repository_url:
+        description: URL of the repository.
+        type: string
+      repository_name:
+        description: Full name of the repository.
+        type: string
+      indicators:
+        $ref: '#/definitions/Indicators'
+  Indicators:
+    type: object
+    description: >-
+      Health indicators for the repository. This object contains all the
+      indicators as returned by /indicators endpoint.
+    properties:
+      average_response_times:
+        type: array
+        items:
+          $ref: '#/definitions/AverageResponseTime'
+      commits:
+        $ref: '#/definitions/Commits'
+      issues:
+        $ref: '#/definitions/Issues'
+      license:
+        $ref: '#/definitions/License'
+      pull_requests:
+        $ref: '#/definitions/PullRequest'
+      readme:
+        $ref: '#/definitions/Readme'
+  Commits:
+    type: object
+    properties:
+      time_since_first_commit:
+        type: string
+        description: Number of days since the first commit was made to the repository.
+      time_since_last_commit:
+        type: string
+        description: Number of days since the last commit was made to the repository.
+      commit_frequency:
+        $ref: '#/definitions/CommitFrequency'
+  Issues:
+    type: object
+    properties:
+      total_issues:
+        type: string
+        description: Number of issues opened.
+      average_time_to_close:
+        type: string
+        description: Average time to close issues since the time of its creation in days.
+      open_vs_closed:
+        description: Issues open vs. closed.
+        type: object
+        properties:
+          per_week:
+            type: string
+            description: Issues open vs. closed per week
+          per_month:
+            type: string
+            description: Issues open vs. closed per month
+  PullRequest:
+    type: object
+    properties:
+      total_pull_requests:
+        type: string
+        description: Number of pull requests sent.
+      merged_pull_requests:
+        type: string
+        description: Number of pull requests merged.
+      sent_vs_merged:
+        description: Pull requests sent vs. merged.
+        type: object
+        properties:
+          per_week:
+            type: string
+            description: Pull requests sent vs. merged per week
+          per_month:
+            type: string
+            description: Pull requests sent vs. merged per month
+  Readme:
+    type: object
+    properties:
+      exists:
+        type: boolean
+        description: TRUE if the repository has a README file.
+      url:
+        type: string
+        description: URL of the README file.
+  License:
+    type: object
+    properties:
+      exists:
+        type: boolean
+        description: TRUE if the repository has a license file.
+      url:
+        type: string
+        description: URL of the license file.
+      name:
+        type: string
+        description: Name of the license.
+  CommitFrequency:
+    type: object
+    properties:
+      total_commits:
+        type: string
+        description: Total numer of commits.
+      per_week:
+        type: string
+        description: Number of commits per week.
+      per_month:
+        type: string
+        description: Number of commits per month.
+  AverageResponseTime:
+    type: object
+    properties:
+      user_name:
+        type: string
+        description: User name of the actor on Github.
+      average_response_time:
+        type: string
+        description: >-
+          Average response time of actor measured in days. A response time of an
+          actor is calculated across issues and pull requests by
+          time(creation)%time(first event by actor). All events
+          (https://developer.github.com/v3/issues/events/) are considered for
+          calculation of average response time.
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
