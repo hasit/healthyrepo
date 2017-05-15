@@ -41,23 +41,54 @@ func fillHealthIndicators(health *Health, indicators []string) {
 	for _, indicator := range indicators {
 		switch indicator {
 		case "readme":
-			readme, err := getReadme(health.RepositoryOwner, health.RepositoryName)
-			if err != nil {
-				log.Println(err)
-			}
-			if readme != nil {
-				health.Indicators.Readme = *readme
-			}
+			// readme, err := getReadme(health.RepositoryOwner, health.RepositoryName)
+			// if err != nil {
+			// 	log.Println(err)
+			// }
+			// if readme != nil {
+			// 	health.Indicators.Readme = *readme
+			// }
+			go health.fillReadme()
 		case "license":
-			license, err := getLicense(health.RepositoryOwner, health.RepositoryName)
-			if err != nil {
-				log.Println(err)
-			}
-			if license != nil {
-				health.Indicators.License = *license
-			}
+			// license, err := getLicense(health.RepositoryOwner, health.RepositoryName)
+			// if err != nil {
+			// 	log.Println(err)
+			// }
+			// if license != nil {
+			// 	health.Indicators.License = *license
+			// }
+			go health.fillLicense()
 		}
 	}
+}
+
+func (health *Health) fillReadme() {
+	client := github.NewClient(nil)
+	ctx := context.Background()
+
+	opts := &github.RepositoryContentGetOptions{}
+
+	repoReadme, _, err := client.Repositories.GetReadme(ctx, health.RepositoryOwner, health.RepositoryName, opts)
+	if err != nil {
+		log.Println(err)
+	}
+
+	health.Indicators.Readme.Exists = true
+	health.Indicators.Readme.URL = repoReadme.GetHTMLURL()
+}
+
+func (health *Health) fillLicense() {
+	client := github.NewClient(nil)
+	ctx := context.Background()
+
+	repoLicense, _, err := client.Repositories.License(ctx, health.RepositoryOwner, health.RepositoryName)
+	if err != nil {
+		log.Println(err)
+	}
+
+	health.Indicators.License.Exists = true
+	health.Indicators.License.URL = repoLicense.GetHTMLURL()
+	health.Indicators.License.Name = repoLicense.License.GetName()
 }
 
 func getReadme(owner, repo string) (*Readme, error) {
