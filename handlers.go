@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -17,44 +18,44 @@ func (h *Handler) getGithubRepoHealth(c echo.Context) error {
 
 	owner := c.Param("owner")
 	repo := c.Param("repo")
-	queryParams := c.QueryParams()
+	indicators := c.QueryParam("indicators")
 
 	health := &Health{
 		RepositoryName:     repo,
 		RepositoryOwner:    owner,
 		RepositoryFullName: fmt.Sprintf("%s/%s", owner, repo),
 		RepositoryURL:      fmt.Sprintf("https://github.com/%s/%s", owner, repo),
-		Timestamp:          time.Now(),
+		Timestamp:          time.Now().String(),
 	}
 
-	for queryKey, queryValues := range queryParams {
-		switch queryKey {
-		case "indicators":
-			fillHealthIndicators(health, queryValues)
-		}
-	}
+	fillHealthIndicators(health, indicators)
 
 	return c.JSON(http.StatusOK, health)
 }
 
-func fillHealthIndicators(health *Health, indicators []string) {
-	for _, indicator := range indicators {
-		switch indicator {
-		case "readme":
-			readme, err := getReadme(health.RepositoryOwner, health.RepositoryName)
-			if err != nil {
-				log.Println(err)
-			}
-			if readme != nil {
-				health.Indicators.Readme = *readme
-			}
-		case "license":
-			license, err := getLicense(health.RepositoryOwner, health.RepositoryName)
-			if err != nil {
-				log.Println(err)
-			}
-			if license != nil {
-				health.Indicators.License = *license
+func fillHealthIndicators(health *Health, indicators string) {
+	if indicators == "all" {
+		fmt.Println("all")
+	} else {
+		indicatorsList := strings.Split(indicators, ",")
+		for _, indicator := range indicatorsList {
+			switch indicator {
+			case "readme":
+				readme, err := getReadme(health.RepositoryOwner, health.RepositoryName)
+				if err != nil {
+					log.Println(err)
+				}
+				if readme != nil {
+					health.Indicators.Readme = *readme
+				}
+			case "license":
+				license, err := getLicense(health.RepositoryOwner, health.RepositoryName)
+				if err != nil {
+					log.Println(err)
+				}
+				if license != nil {
+					health.Indicators.License = *license
+				}
 			}
 		}
 	}
