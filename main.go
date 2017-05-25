@@ -13,7 +13,7 @@ func main() {
 
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Skipper: middleware.DefaultSkipper,
-		Format:  "{\"time\"\":\"${time_rfc3339_nano}\", \"remote_ip\":\"${remote_ip}\", \"host\":\"${host}\", \"method\":\"${method}\", \"uri\":\"${uri}\", \"status\":${status}, latency:${latency}, \"latency_human\":\"${latency_human}\", \"bytes_in\":${bytes_in}, \"bytes_out\":${bytes_out}}\n",
+		Format:  "{\"time\":\"${time_rfc3339_nano}\", \"remote_ip\":\"${remote_ip}\", \"host\":\"${host}\", \"method\":\"${method}\", \"uri\":\"${uri}\", \"status\":${status}, latency:${latency}, \"latency_human\":\"${latency_human}\", \"bytes_in\":${bytes_in}, \"bytes_out\":${bytes_out}}\n",
 		Output:  os.Stdout,
 	}))
 	e.Use(middleware.Recover())
