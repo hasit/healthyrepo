@@ -1,0 +1,10 @@
+run.config:
+  engine: golang
+  engine.config:
+    runtime: go-1.8
+    package: 'github.com/hasit/healthyrepo'
+    fetch: 'go get'
+    build: 'go build'
+
+web.api:
+  start: healthyrepo
