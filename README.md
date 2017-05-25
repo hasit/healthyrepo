@@ -1,5 +1,5 @@
 # healthyrepo
-Check health of Github repositories across various indicators
+See Health Indicators of Open Source Projects
 
 ## Brainstorming
 Ideas and possible issues about different health indicators.
