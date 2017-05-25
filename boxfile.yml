@@ -3,7 +3,7 @@ run.config:
   engine.config:
     runtime: go-1.8
     package: 'github.com/hasit/healthyrepo'
-    fetch: 'go get'
+    fetch: 'go get -u'
     build: 'go build'
 
 web.api:
