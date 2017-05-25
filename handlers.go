@@ -1,115 +1,40 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
 	"net/http"
-	"strings"
-	"time"
 
-	"github.com/google/go-github/github"
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 )
 
-func (h *Handler) getGithubRepoHealth(c echo.Context) error {
-	db := h.DB.Clone()
-	defer db.Close()
+func (h *DBHandler) getHealth(c echo.Context) error {
+	// db := h.DB.Clone()
+	// defer db.Close()
 
-	owner := c.Param("owner")
-	repo := c.Param("repo")
-	indicators := c.QueryParam("indicators")
+	repoOwner := c.Param("owner")
+	repoName := c.Param("repo")
+	indicator := c.Param("indicator")
 
-	health := &Health{
-		RepositoryName:     repo,
-		RepositoryOwner:    owner,
-		RepositoryFullName: fmt.Sprintf("%s/%s", owner, repo),
-		RepositoryURL:      fmt.Sprintf("https://github.com/%s/%s", owner, repo),
-		Timestamp:          time.Now().String(),
-	}
-
-	fillHealthIndicators(health, indicators)
-
-	return c.JSON(http.StatusOK, health)
-}
-
-func fillHealthIndicators(health *Health, indicators string) {
-	if indicators == "all" {
-		fmt.Println("all")
-	} else {
-		indicatorsList := strings.Split(indicators, ",")
-		for _, indicator := range indicatorsList {
-			switch indicator {
-			case "readme":
-				readme, err := getReadme(health.RepositoryOwner, health.RepositoryName)
-				if err != nil {
-					log.Println(err)
-				}
-				if readme != nil {
-					health.Indicators.Readme = *readme
-				}
-			case "license":
-				license, err := getLicense(health.RepositoryOwner, health.RepositoryName)
-				if err != nil {
-					log.Println(err)
-				}
-				if license != nil {
-					health.Indicators.License = *license
-				}
-			}
-		}
-	}
-}
-
-func getReadme(owner, repo string) (*Readme, error) {
-	client := github.NewClient(nil)
-	ctx := context.Background()
-
-	opts := &github.RepositoryContentGetOptions{}
-
-	repoReadme, _, err := client.Repositories.GetReadme(ctx, owner, repo, opts)
+	respData, err := getHealthData(repoOwner, repoName, indicator)
 	if err != nil {
-		return nil, err
+		return errors.Wrap(err, "error getting health")
 	}
 
-	readme := &Readme{
-		Exists: true,
-		URL:    repoReadme.GetHTMLURL(),
-	}
-
-	return readme, nil
+	return c.JSON(http.StatusOK, respData)
 }
 
-func getLicense(owner, repo string) (*License, error) {
-	client := github.NewClient(nil)
-	ctx := context.Background()
-
-	repoLicense, _, err := client.Repositories.License(ctx, owner, repo)
-	if err != nil {
-		return nil, err
-	}
-
-	license := &License{
-		Exists: true,
-		URL:    repoLicense.GetHTMLURL(),
-		Name:   repoLicense.License.GetName(),
-	}
-
-	return license, nil
-}
-
-func (h *Handler) getIndicators(c echo.Context) error {
+func (h *DBHandler) getIndicators(c echo.Context) error {
 	db := h.DB.Clone()
 	defer db.Close()
 
 	i := db.DB("healthyrepo").C("indicators")
 
-	indicators := []Indicator{}
+	respData := []Indicator{}
 
-	err := i.Find(nil).All(&indicators)
+	err := i.Find(nil).All(&respData)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, indicators)
+	return c.JSON(http.StatusOK, respData)
 }

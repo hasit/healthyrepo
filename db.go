@@ -7,11 +7,11 @@ import (
 	mgo "gopkg.in/mgo.v2"
 )
 
-type Handler struct {
+type DBHandler struct {
 	DB *mgo.Session
 }
 
-func (h *Handler) initDB() error {
+func (dbh *DBHandler) initDB() error {
 	tlsConfig := &tls.Config{}
 
 	dialInfo := &mgo.DialInfo{
@@ -31,7 +31,7 @@ func (h *Handler) initDB() error {
 		return err
 	}
 
-	h.DB = session
+	dbh.DB = session
 
 	return nil
 }

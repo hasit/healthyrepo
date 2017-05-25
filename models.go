@@ -1,37 +1,50 @@
 package main
 
-import "gopkg.in/mgo.v2/bson"
+import (
+	"time"
 
-type Health struct {
-	RepositoryOwner    string `json:"repository_owner"`
-	RepositoryName     string `json:"repository_name"`
-	RepositoryURL      string `json:"repository_url"`
-	RepositoryFullName string `json:"repository_full_name"`
-	Timestamp          string `json:"timestamp"`
-	Indicators         struct {
-		AverageResponseTimes []AverageResponseTime `json:"average_response_times"`
-		Commits              Commits               `json:"commits"`
-		Issues               Issues                `json:"issues"`
-		License              License               `json:"license"`
-		PullRequests         PullRequests          `json:"pull_requests"`
-		Readme               Readme                `json:"readme"`
-	} `json:"indicators"`
+	"gopkg.in/mgo.v2/bson"
+)
+
+type Repository struct {
+	ID         int    `json:"id"`
+	Owner      string `json:"owner"`
+	OwnerIsOrg bool   `json:"owner_is_org"`
+	Name       string `json:"name"`
+	FullName   string `json:"full_name"`
+	URL        string `json:"url"`
 }
 
-type Readme struct {
-	Exists bool   `json:"exists"`
-	URL    string `json:"url"`
+type Docs struct {
+	Repository    Repository `json:"repository"`
+	ReadmeExists  bool       `json:"readme_exists"`
+	ReadmeURL     string     `json:"readme_url"`
+	LicenseExists bool       `json:"license_exists"`
+	LicenseURL    string     `json:"license_url"`
+	LicenseName   string     `json:"license_name"`
 }
 
-type License struct {
-	Exists bool   `json:"exists"`
-	URL    string `json:"url"`
-	Name   string `json:"name"`
+type ResponseTimes struct {
+	Repository           Repository            `json:"repository"`
+	AverageResponseTimes []AverageResponseTime `json:"average_response_times"`
+}
+
+type AverageResponseTime struct {
+	Contributor           string    `json:"contributor"`
+	AverageResponseTime   float32   `json:"average_response_time"`
+	FirstContributionWeek time.Time `json:"first_contribution_week"`
+}
+
+type Indicator struct {
+	ID   bson.ObjectId `bson:"_id" json:"id"`
+	Name string        `bson:"name" json:"name"`
+	Key  string        `bson:"key" json:"key"`
 }
 
 type PullRequests struct {
-	TotalPullRequests  string `json:"total_pull_requests"`
-	MergedPullRequests string `json:"merged_pull_requests"`
+	Repository         Repository `json:"repository"`
+	TotalPullRequests  string     `json:"total_pull_requests"`
+	MergedPullRequests string     `json:"merged_pull_requests"`
 	SentVsMerged       struct {
 		PerWeek  string `json:"per_week"`
 		PerMonth string `json:"per_month"`
@@ -39,8 +52,9 @@ type PullRequests struct {
 }
 
 type Issues struct {
-	TotalPullRequests  string `json:"total_pull_requests"`
-	MergedPullRequests string `json:"merged_pull_requests"`
+	Repository         Repository `json:"repository"`
+	TotalPullRequests  string     `json:"total_pull_requests"`
+	MergedPullRequests string     `json:"merged_pull_requests"`
 	SentVsMerged       struct {
 		PerWeek  string `json:"per_week"`
 		PerMonth string `json:"per_month"`
@@ -48,21 +62,11 @@ type Issues struct {
 }
 
 type Commits struct {
-	TotalPullRequests  string `json:"total_pull_requests"`
-	MergedPullRequests string `json:"merged_pull_requests"`
+	Repository         Repository `json:"repository"`
+	TotalPullRequests  string     `json:"total_pull_requests"`
+	MergedPullRequests string     `json:"merged_pull_requests"`
 	SentVsMerged       struct {
 		PerWeek  string `json:"per_week"`
 		PerMonth string `json:"per_month"`
 	} `json:"sent_vs_merged"`
-}
-
-type AverageResponseTime struct {
-	UserName            string `json:"user_name"`
-	AverageResponseTime string `json:"average_response_time"`
-}
-
-type Indicator struct {
-	ID   bson.ObjectId `bson:"_id" json:"id"`
-	Name string        `bson:"name" json:"name"`
-	Key  string        `bson:"key" json:"key"`
 }
