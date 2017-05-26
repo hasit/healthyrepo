@@ -48,7 +48,7 @@ func getHealthData(repoOwner, repoName, indicator string) (interface{}, error) {
 	case "response_times":
 		responseTimes, err := getReponseTimes(repoOwner, repoName)
 		if err != nil {
-			return nil, errors.Wrap(err, "error getting contributors")
+			return nil, errors.Wrap(err, "error getting response times")
 		}
 		if responseTimes != nil {
 			responseTimes.Repository = repository
@@ -119,12 +119,23 @@ func getReponseTimes(repoOwner, repoName string) (*ResponseTimes, error) {
 	}
 
 	issueListByRepoOpts := &github.IssueListByRepoOptions{
-		Since: time.Now().AddDate(-1, 0, 0),
+		ListOptions: github.ListOptions{
+			PerPage: 200,
+		},
+		Since: time.Now().AddDate(0, -6, 0),
 		State: "all",
 	}
-	issues, _, err := client.Issues.ListByRepo(ctx, repoOwner, repoName, issueListByRepoOpts)
-	if err != nil {
-		return nil, errors.Wrap(err, "error getting repo issues")
+	var issues []*github.Issue
+	for {
+		paginatedIssues, resp, err := client.Issues.ListByRepo(ctx, repoOwner, repoName, issueListByRepoOpts)
+		if err != nil {
+			return nil, errors.Wrap(err, "error getting repo issues")
+		}
+		issues = append(issues, paginatedIssues...)
+		if resp.NextPage == 0 {
+			break
+		}
+		issueListByRepoOpts.Page = resp.NextPage
 	}
 
 	responseTimesList := make(map[string]map[int]int)
@@ -136,10 +147,21 @@ func getReponseTimes(repoOwner, repoName string) (*ResponseTimes, error) {
 
 		issueListCommentsOpts := &github.IssueListCommentsOptions{
 			Sort: "created",
+			ListOptions: github.ListOptions{
+				PerPage: 50,
+			},
 		}
-		issueComments, _, err := client.Issues.ListComments(ctx, repoOwner, repoName, issue.GetNumber(), issueListCommentsOpts)
-		if err != nil {
-			return nil, errors.Wrapf(err, "error getting issue #%d comments", issueNumber)
+		var issueComments []*github.IssueComment
+		for {
+			paginatedIssueComments, resp, err := client.Issues.ListComments(ctx, repoOwner, repoName, issue.GetNumber(), issueListCommentsOpts)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error getting issue #%d comments", issueNumber)
+			}
+			issueComments = append(issueComments, paginatedIssueComments...)
+			if resp.NextPage == 0 {
+				break
+			}
+			issueListCommentsOpts.Page = resp.NextPage
 		}
 
 		for _, issueComment := range issueComments {
