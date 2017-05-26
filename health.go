@@ -97,7 +97,7 @@ func getReponseTimes(repoOwner, repoName string) (*ResponseTimes, error) {
 
 	contributorsStats, _, err := client.Repositories.ListContributorsStats(ctx, repoOwner, repoName)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error getting contributor stats")
 	}
 
 	for _, contributorStats := range contributorsStats {
@@ -124,7 +124,7 @@ func getReponseTimes(repoOwner, repoName string) (*ResponseTimes, error) {
 	}
 	issues, _, err := client.Issues.ListByRepo(ctx, repoOwner, repoName, issueListByRepoOpts)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error getting repo issues")
 	}
 
 	responseTimesList := make(map[string]map[int]int)
@@ -139,7 +139,7 @@ func getReponseTimes(repoOwner, repoName string) (*ResponseTimes, error) {
 		}
 		issueComments, _, err := client.Issues.ListComments(ctx, repoOwner, repoName, issue.GetNumber(), issueListCommentsOpts)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "error getting issue #%d comments", issueNumber)
 		}
 
 		for _, issueComment := range issueComments {
