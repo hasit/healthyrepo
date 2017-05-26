@@ -41,29 +41,31 @@ type AverageResponseTime struct {
 	FirstContributionWeek time.Time `json:"first_contribution_week"`
 }
 
+type Commits struct {
+	Repository      Repository `json:"repository"`
+	TotalCommits    uint8      `json:"total_commits"`
+	FirstCommitAt   time.Time  `json:"first_commit_at"`
+	FirstCommitBy   string     `json:"first_commit_by"`
+	LastCommitAt    time.Time  `json:"last_commit_at"`
+	LastCommitBy    string     `json:"last_commit_by"`
+	CommitFrequency []PerWeek  `json:"commit_frequency"`
+}
+
 type PullRequests struct {
 	Repository         Repository `json:"repository"`
 	TotalPullRequests  string     `json:"total_pull_requests"`
 	MergedPullRequests string     `json:"merged_pull_requests"`
-	SentVsMerged       Frequency  `json:"sent_vs_merged"`
+	SentVsMerged       []PerWeek  `json:"sent_vs_merged"`
 }
 
 type Issues struct {
 	Repository         Repository `json:"repository"`
 	TotalIssues        string     `json:"total_issues"`
 	AverageTimeToClose string     `json:"average_time_to_close"`
-	OpenVsClosed       Frequency  `json:"open_vs_closed"`
+	OpenVsClosed       []PerWeek  `json:"open_vs_closed"`
 }
 
-type Commits struct {
-	Repository    Repository `json:"repository"`
-	TotalCommits  int        `json:"total_commits"`
-	FirstCommitAt time.Time  `json:"first_commit_at"`
-	LastCommitAt  time.Time  `json:"last_commit_at"`
-	CodeFrequency Frequency  `json:"code_frequency"`
-}
-
-type Frequency struct {
-	PerWeek  string `json:"per_week"`
-	PerMonth string `json:"per_month"`
+type PerWeek struct {
+	Week   uint  `json:"week"`
+	Number uint8 `json:"number"`
 }
