@@ -31,19 +31,25 @@ type Docs struct {
 }
 
 type ResponseTimes struct {
-	Repository           Repository            `json:"repository"`
-	AverageResponseTimes []AverageResponseTime `json:"average_response_times"`
+	Repository               Repository                `json:"repository"`
+	ContributorResponseTimes []ContributorResponseTime `json:"contributor_response_times"`
 }
 
-type AverageResponseTime struct {
-	Contributor           string    `json:"contributor"`
-	AverageResponseTime   float32   `json:"average_response_time"`
-	FirstContributionWeek time.Time `json:"first_contribution_week"`
+type ContributorResponseTime struct {
+	Contributor           string                `json:"contributor"`
+	AverageResponseTime   float32               `json:"average_response_time"`
+	ResponseTimesByIssues []ResponseTimeByIssue `json:"response_times_by_issues"`
+	FirstContributionWeek time.Time             `json:"first_contribution_week"`
+}
+
+type ResponseTimeByIssue struct {
+	IssueNumber       int `json:"issue_number"`
+	IssueResponseTime int `json:"issue_response_time"`
 }
 
 type Commits struct {
 	Repository      Repository `json:"repository"`
-	TotalCommits    uint8      `json:"total_commits"`
+	TotalCommits    int        `json:"total_commits"`
 	FirstCommitAt   time.Time  `json:"first_commit_at"`
 	FirstCommitBy   string     `json:"first_commit_by"`
 	LastCommitAt    time.Time  `json:"last_commit_at"`
@@ -66,6 +72,6 @@ type Issues struct {
 }
 
 type PerWeek struct {
-	Week   uint  `json:"week"`
-	Number uint8 `json:"number"`
+	Week   uint `json:"week"`
+	Number uint `json:"number"`
 }

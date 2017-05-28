@@ -91,9 +91,10 @@ func getDocs(repoOwner, repoName string) (*Docs, error) {
 }
 
 func getReponseTimes(repoOwner, repoName string) (*ResponseTimes, error) {
-	responseTimes := &ResponseTimes{}
-
 	ctx, client := newGithubClient(true)
+
+	responseTimes := &ResponseTimes{}
+	responseTimesList := make(map[string]map[int]int)
 
 	contributorsStats, _, err := client.Repositories.ListContributorsStats(ctx, repoOwner, repoName)
 	if err != nil {
@@ -101,21 +102,22 @@ func getReponseTimes(repoOwner, repoName string) (*ResponseTimes, error) {
 	}
 
 	for _, contributorStats := range contributorsStats {
-		averageResponseTime := AverageResponseTime{}
-		averageResponseTime.Contributor = contributorStats.Author.GetLogin()
+		contributorResponseTime := ContributorResponseTime{}
+		contributorResponseTime.Contributor = contributorStats.Author.GetLogin()
 		for wi, week := range contributorStats.Weeks {
 			if week.GetCommits() != 0 {
-				averageResponseTime.FirstContributionWeek = contributorStats.Weeks[wi].GetWeek().Time
+				contributorResponseTime.FirstContributionWeek = contributorStats.Weeks[wi].GetWeek().Time
 				break
 			}
 		}
-		averageResponseTime.AverageResponseTime = -1
-		responseTimes.AverageResponseTimes = append(responseTimes.AverageResponseTimes, averageResponseTime)
+		contributorResponseTime.AverageResponseTime = -1
+		// responseTimesList[contributorStats.Author.GetLogin()] =
+		responseTimes.ContributorResponseTimes = append(responseTimes.ContributorResponseTimes, contributorResponseTime)
 	}
 
 	firstContributionWeeks := make(map[string]time.Time)
-	for _, averageResponseTime := range responseTimes.AverageResponseTimes {
-		firstContributionWeeks[averageResponseTime.Contributor] = averageResponseTime.FirstContributionWeek
+	for _, contributorResponseTime := range responseTimes.ContributorResponseTimes {
+		firstContributionWeeks[contributorResponseTime.Contributor] = contributorResponseTime.FirstContributionWeek
 	}
 
 	issueListByRepoOpts := &github.IssueListByRepoOptions{
@@ -137,8 +139,6 @@ func getReponseTimes(repoOwner, repoName string) (*ResponseTimes, error) {
 		}
 		issueListByRepoOpts.Page = resp.NextPage
 	}
-
-	responseTimesList := make(map[string]map[int]int)
 
 	for _, issue := range issues {
 		issueCreatedAt := issue.GetCreatedAt()
@@ -189,21 +189,21 @@ func getReponseTimes(repoOwner, repoName string) (*ResponseTimes, error) {
 		}
 	}
 
-	averageResponseTimes := responseTimes.AverageResponseTimes
+	contributorResponseTimes := responseTimes.ContributorResponseTimes
 
 	for user, rts := range responseTimesList {
 		totalTime := 0
 		for _, rt := range rts {
 			totalTime += rt
 		}
-		for i, arts := range averageResponseTimes {
+		for i, arts := range contributorResponseTimes {
 			if arts.Contributor == user {
-				averageResponseTimes[i].AverageResponseTime = float32(totalTime) / float32(len(rts))
+				contributorResponseTimes[i].AverageResponseTime = float32(totalTime) / float32(len(rts))
 			}
 		}
 	}
 
-	responseTimes.AverageResponseTimes = averageResponseTimes
+	responseTimes.ContributorResponseTimes = contributorResponseTimes
 
 	return responseTimes, nil
 }
