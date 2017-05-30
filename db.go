@@ -7,6 +7,7 @@ import (
 	mgo "gopkg.in/mgo.v2"
 )
 
+//DBHandler holds a session infomation for accessing MongoDB instance using mgo
 type DBHandler struct {
 	DB *mgo.Session
 }
