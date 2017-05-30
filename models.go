@@ -35,7 +35,7 @@ type ResponseTimes struct {
 	ContributorsResponseStats map[string]ResponseStats `json:"contributors_response_stats" bson:"contributors_response_stats"`
 }
 
-// ResponseStats holds information to calculate average reponse times and issue reponse times of contributor.
+// ResponseStats holds information to calculate average response times and issue response times of contributor.
 type ResponseStats struct {
 	FirstContributionWeek time.Time   `json:"first_contribution_week" bson:"first_contribution_week"`
 	AverageResponseTime   float32     `json:"avg_rt" bson:"avg_rt"`
