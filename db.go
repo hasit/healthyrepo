@@ -12,7 +12,7 @@ type DBHandler struct {
 	DB *mgo.Session
 }
 
-func (dbh *DBHandler) initDB() error {
+func (h *DBHandler) initDB() error {
 	tlsConfig := &tls.Config{}
 
 	dialInfo := &mgo.DialInfo{
@@ -32,7 +32,7 @@ func (dbh *DBHandler) initDB() error {
 		return err
 	}
 
-	dbh.DB = session
+	h.DB = session
 
 	return nil
 }
