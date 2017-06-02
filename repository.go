@@ -14,7 +14,8 @@ type Repository struct {
 	OwnerIsOrg     bool   `json:"org" bson:"org"`
 	Name           string `json:"name" bson:"name"`
 	FullName       string `json:"full_name" bson:"full_name"`
-	URL            string `json:"url" bson:"url"`
+	RepoURL        string `json:"repo_url" bson:"repo_url"`
+	OwnerURL       string `json:"owner_url" bson:"owner_url"`
 }
 
 func getRepo(repoOwner, repoName string) (*Repository, error) {
@@ -34,7 +35,8 @@ func getRepo(repoOwner, repoName string) (*Repository, error) {
 		Owner:          repo.Owner.GetLogin(),
 		Name:           repo.GetName(),
 		FullName:       repo.GetFullName(),
-		URL:            repo.GetHTMLURL(),
+		RepoURL:        repo.GetHTMLURL(),
+		OwnerURL:       repo.Owner.GetHTMLURL(),
 		OwnerAvatarURL: repo.Owner.GetAvatarURL(),
 		OwnerIsOrg:     false,
 	}
