@@ -11,6 +11,8 @@ import (
 func main() {
 	e := echo.New()
 
+	e.Pre(middleware.RemoveTrailingSlash())
+
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Skipper: middleware.DefaultSkipper,
 		Format:  "{\"time\":\"${time_rfc3339_nano}\", \"remote_ip\":\"${remote_ip}\", \"host\":\"${host}\", \"method\":\"${method}\", \"uri\":\"${uri}\", \"status\":${status}, latency:${latency}, \"latency_human\":\"${latency_human}\", \"bytes_in\":${bytes_in}, \"bytes_out\":${bytes_out}}\n",
@@ -39,12 +41,18 @@ func main() {
 	e.GET("/indicators", dbh.getIndicators)
 	e.GET("/indicators/:indicator", dbh.getIndicator)
 
-	// Repository
-	e.GET("/repo/:owner/:repo", dbh.getRepository)
+	// Repository Group
+	r := e.Group("/repo/:owner/:repo")
 
-	// Health
-	e.GET("/repo/:owner/:repo/health/docs", dbh.getRepositoryHealthDocs)
-	e.GET("/repo/:owner/:repo/health/response_times", dbh.getRepositoryHealthResponseTimes)
+	// Repository
+	r.GET("", dbh.getRepository)
+
+	// Health Group
+	h := r.Group("/health")
+
+	// Health Indicators
+	h.GET("/docs", dbh.getRepositoryHealthDocs)
+	r.GET("/response_times", dbh.getRepositoryHealthResponseTimes)
 
 	// data, err := json.MarshalIndent(e.Routes(), "", "  ")
 	// if err != nil {
