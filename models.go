@@ -16,15 +16,3 @@ package main
 // 	MergedPullRequests string     `json:"merged_pull_requests" bson:"merged_pull_requests"`
 // 	SentVsMerged       []PerWeek  `json:"sent_vs_merged" bson:"sent_vs_merged"`
 // }
-
-// type Issues struct {
-// 	Repository       Repository `json:"repository" bson:"repository"`
-// 	TotalIssues      string     `json:"total_issues" bson:"total_issues"`
-// 	AverageCloseTime string     `json:"average_close_time" bson:"average_close_time"`
-// 	OpenVsClosed     []PerWeek  `json:"open_vs_closed" bson:"open_vs_closed"`
-// }
-
-// type PerWeek struct {
-// 	Week   uint `json:"week" bson:"week"`
-// 	Number uint `json:"number" bson:"number"`
-// }
