@@ -49,6 +49,7 @@ func main() {
 	// Health Indicators
 	h.GET("/docs", dbh.getRepositoryHealthDocs)
 	h.GET("/response_times", dbh.getRepositoryHealthResponseTimes)
+	h.GET("/pull_requests", dbh.getRepositoryHealthPullRequests)
 
 	// data, err := json.MarshalIndent(e.Routes(), "", "  ")
 	// if err != nil {

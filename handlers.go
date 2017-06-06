@@ -172,3 +172,55 @@ func (h *DBHandler) getRepositoryHealthResponseTimes(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, responseTimes)
 }
+
+func (h *DBHandler) getRepositoryHealthPullRequests(c echo.Context) error {
+	db := h.DB.Clone()
+	defer db.Close()
+
+	repoOwner := c.Param("owner")
+	repoName := c.Param("repo")
+
+	repository, err := getRepo(repoOwner, repoName)
+	if err != nil {
+		return err
+	}
+
+	prs := &PullRequests{}
+
+	r := db.DB("healthyrepo").C("pull_requests")
+	err = r.Find(bson.M{"repository.full_name": repository.FullName}).One(prs)
+	if err != nil {
+		if err.Error() == "not found" {
+			prs.Repository = repository
+
+			err := getPullRequests(prs)
+			if err != nil {
+				httpError := &HTTPError{
+					Code:    http.StatusInternalServerError,
+					Message: errors.Wrapf(err, "Error getting health 'pull_requests' of repo '%s' in Github API", repository.FullName).Error(),
+				}
+				return c.JSON(http.StatusInternalServerError, httpError)
+			}
+
+			err = r.Insert(prs)
+			if err != nil {
+				httpError := &HTTPError{
+					Code:    http.StatusInternalServerError,
+					Message: errors.Wrapf(err, "Error inserting health 'pull_requests' of repo '%s' in database", repository.FullName).Error(),
+				}
+				return c.JSON(http.StatusInternalServerError, httpError)
+			}
+
+			log.Infof("Success inserting health 'pull_requests' of repo '%s' in database", repository.FullName)
+
+		} else {
+			httpError := &HTTPError{
+				Code:    http.StatusInternalServerError,
+				Message: errors.Wrapf(err, "Error getting health 'pull_requests' of repo '%s' in database", repository.FullName).Error(),
+			}
+			return c.JSON(http.StatusInternalServerError, httpError)
+		}
+	}
+
+	return c.JSON(http.StatusOK, prs)
+}
