@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -26,6 +25,7 @@ type ContributorResponseStats struct {
 // IssueResponseTime holds information about response times corresponding to issues.
 type IssueResponseTime struct {
 	IssueCreatedAt time.Time `json:"issue_created_at" bson:"issue_created_at"`
+	Internal       bool      `json:"internal" bson:"internal"`
 	IssueNumber    int       `json:"issue_number" bson:"issue_number"`
 	ResponseTime   int       `json:"response_time" bson:"response_time"`
 }
@@ -37,8 +37,8 @@ func getReponseTimes(responseTimes *ResponseTimes) error {
 	repoName := responseTimes.Repository.Name
 
 	contributorsStats, _, err := client.Repositories.ListContributorsStats(ctx, repoOwner, repoName)
-	if err != nil {
-		return errors.Wrap(err, "error getting contributor stats")
+	if _, ok := err.(*github.AcceptedError); ok {
+		return errors.Wrap(err, "scheduled on Github side")
 	}
 
 	contributorsResponseStats := []*ContributorResponseStats{}
@@ -47,6 +47,7 @@ func getReponseTimes(responseTimes *ResponseTimes) error {
 		contributorResponseStats := &ContributorResponseStats{}
 		contributorResponseStats.Contributor = contributorStats.Author.GetLogin()
 		contributorResponseStats.AverageResponseTime = -1
+		contributorResponseStats.IssuesResponseTimes = []*IssueResponseTime{}
 		for weeki, week := range contributorStats.Weeks {
 			if week.GetCommits() != 0 {
 				contributorResponseStats.FirstContributionWeek = contributorStats.Weeks[weeki].GetWeek().Time
@@ -57,7 +58,6 @@ func getReponseTimes(responseTimes *ResponseTimes) error {
 	}
 
 	since := time.Now().AddDate(0, -6, 0)
-	responseTimes.Since = since
 
 	issueListByRepoOpts := &github.IssueListByRepoOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
@@ -77,74 +77,81 @@ func getReponseTimes(responseTimes *ResponseTimes) error {
 		issueListByRepoOpts.Page = resp.NextPage
 	}
 
-	// wg := sync.WaitGroup{}
-	// wg.Add(len(contributorsResponseStats))
-	for _, contributorResponseStats := range contributorsResponseStats {
-		getContributorResponseStats(repoOwner, repoName, issues, contributorResponseStats)
-	}
-	// wg.Wait()
-
-	responseTimes.ContributorsResponseStats = contributorsResponseStats
-
-	return nil
-}
-
-func getContributorResponseStats(repoOwner string, repoName string, issues []*github.Issue, contributorResponseStats *ContributorResponseStats) {
-	// defer wg.Done()
-	ctx, client := newGithubClient(true)
-	contributor := contributorResponseStats.Contributor
-	issuesResponseTimes := []*IssueResponseTime{}
-
 	for _, issue := range issues {
 		issueCreatedAt := issue.GetCreatedAt()
 		issueCreator := issue.User.GetLogin()
 		issueNumber := issue.GetNumber()
+		issueCreatorIsContributor := false
 
-		issueResponseTime := &IssueResponseTime{}
-		issueResponseTime.IssueCreatedAt = issueCreatedAt
-		issueResponseTime.IssueNumber = issueNumber
-
-		if issueCreator != contributor {
-			issueListCommentsOpts := &github.IssueListCommentsOptions{
-				ListOptions: github.ListOptions{PerPage: 50},
-				Sort:        "created",
+		for _, contributorResponseStats := range contributorsResponseStats {
+			if issueCreator == contributorResponseStats.Contributor {
+				issueCreatorIsContributor = true
 			}
-			var issueComments []*github.IssueComment
-			for {
-				paginatedIssueComments, resp, err := client.Issues.ListComments(ctx, repoOwner, repoName, issue.GetNumber(), issueListCommentsOpts)
-				if err != nil {
-					fmt.Println(err)
-				}
-				issueComments = append(issueComments, paginatedIssueComments...)
-				if resp.NextPage == 0 {
-					break
-				}
-				issueListCommentsOpts.Page = resp.NextPage
+		}
+
+		issueListCommentsOpts := &github.IssueListCommentsOptions{
+			ListOptions: github.ListOptions{PerPage: 50},
+			Sort:        "created",
+		}
+		var issueComments []*github.IssueComment
+		for {
+			paginatedIssueComments, resp, err := client.Issues.ListComments(ctx, repoOwner, repoName, issue.GetNumber(), issueListCommentsOpts)
+			if err != nil {
+				return errors.Wrap(err, "error getting issue comments")
 			}
+			issueComments = append(issueComments, paginatedIssueComments...)
+			if resp.NextPage == 0 {
+				break
+			}
+			issueListCommentsOpts.Page = resp.NextPage
+		}
 
-			for _, issueComment := range issueComments {
-				issueCommentCreator := issueComment.User.GetLogin()
-				issueCommentCreatedAt := issueComment.GetCreatedAt()
-				responseTimeInDays := daysDiff(issueCommentCreatedAt, issueCreatedAt)
+		for _, issueComment := range issueComments {
+			issueCommentCreator := issueComment.User.GetLogin()
+			issueCommentCreatedAt := issueComment.GetCreatedAt()
+			responseTimeInDays := daysDiff(issueCommentCreatedAt, issueCreatedAt)
 
-				if issueCommentCreator == contributor {
-					if contributorResponseStats.FirstContributionWeek.Before(issueCreatedAt) {
-						issueResponseTime.ResponseTime = responseTimeInDays
-						issuesResponseTimes = append(issuesResponseTimes, issueResponseTime)
-						break
+			if issueCommentCreator != issueCreator {
+				for _, contributorResponseStats := range contributorsResponseStats {
+					if issueCommentCreator == contributorResponseStats.Contributor {
+						issueResponseTime := &IssueResponseTime{}
+						issueResponseTime.IssueCreatedAt = issueCreatedAt
+						issueResponseTime.IssueNumber = issueNumber
+
+						gotIssueResponseTime := false
+						for _, issuesResponseTimes := range contributorResponseStats.IssuesResponseTimes {
+							if issuesResponseTimes.IssueNumber == issueNumber {
+								gotIssueResponseTime = true
+							}
+						}
+
+						if contributorResponseStats.FirstContributionWeek.Before(issueCreatedAt) && !gotIssueResponseTime {
+							if issueCreatorIsContributor {
+								issueResponseTime.Internal = true
+							}
+							issueResponseTime.ResponseTime = responseTimeInDays
+							contributorResponseStats.IssuesResponseTimes = append(contributorResponseStats.IssuesResponseTimes, issueResponseTime)
+							break
+						}
 					}
 				}
 			}
 		}
 	}
 
-	if len(issuesResponseTimes) > 0 {
-		var totalResponseTime int
-		for _, issueResponseTime := range issuesResponseTimes {
-			totalResponseTime += issueResponseTime.ResponseTime
+	for _, contributorResponseStats := range contributorsResponseStats {
+		if len(contributorResponseStats.IssuesResponseTimes) > 0 {
+			var totalResponseTime int
+			for _, issueResponseTime := range contributorResponseStats.IssuesResponseTimes {
+				if !issueResponseTime.Internal {
+					totalResponseTime += issueResponseTime.ResponseTime
+				}
+			}
+			contributorResponseStats.AverageResponseTime = float64(totalResponseTime) / float64(len(contributorResponseStats.IssuesResponseTimes))
 		}
-		contributorResponseStats.AverageResponseTime = float64(totalResponseTime) / float64(len(issuesResponseTimes))
 	}
 
-	contributorResponseStats.IssuesResponseTimes = issuesResponseTimes
+	responseTimes.ContributorsResponseStats = contributorsResponseStats
+
+	return nil
 }
