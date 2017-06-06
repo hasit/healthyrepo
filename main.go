@@ -33,10 +33,6 @@ func main() {
 
 	e.File("/favicon.ico", "images/favicon.ico")
 
-	// Instrumentation
-	e.GET("/_count", getGoroutinesCount)
-	e.GET("/_stack", getStackTraceHandler)
-
 	// Indicators
 	e.GET("/indicators", dbh.getIndicators)
 	e.GET("/indicators/:indicator", dbh.getIndicator)

@@ -3,9 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"runtime"
-	"runtime/debug"
-	"strconv"
 
 	"gopkg.in/mgo.v2/bson"
 
@@ -13,22 +10,6 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/pkg/errors"
 )
-
-// get the count of number of go routines in the system.
-func countGoRoutines() int {
-	return runtime.NumGoroutine()
-}
-
-func getGoroutinesCount(c echo.Context) error {
-	// Get the count of number of go routines running.
-	count := countGoRoutines()
-	return c.String(http.StatusOK, strconv.Itoa(count))
-}
-
-func getStackTraceHandler(c echo.Context) error {
-	stack := debug.Stack()
-	return c.String(http.StatusOK, string(stack))
-}
 
 func (h *DBHandler) getIndicators(c echo.Context) error {
 	db := h.DB.Clone()
@@ -177,7 +158,9 @@ func (h *DBHandler) getRepositoryHealthResponseTimes(c echo.Context) error {
 				}
 				return c.JSON(http.StatusInternalServerError, httpError)
 			}
+
 			log.Infof("Success inserting health 'response_times' of repo '%s' in database", repository.FullName)
+
 		} else {
 			httpError := &HTTPError{
 				Code:    http.StatusInternalServerError,
