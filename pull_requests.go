@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/google/go-github/github"
 	"github.com/pkg/errors"
 )
@@ -53,28 +51,28 @@ func getPullRequests(prs *PullRequests) error {
 
 	// prPerMonth := []*PRPerMonth{}
 
-	var monthYearPRStats map[string]*prStats
+	// var monthYearPRStats map[string]*prStats
 
 	for _, pull := range pulls {
-		pullCreatedAt := pull.GetCreatedAt()
-		merged := false
+		// pullCreatedAt := pull.GetCreatedAt()
+		// merged := false
 
-		month := pullCreatedAt.Month()
-		year := pullCreatedAt.Year()
-		monthyear := fmt.Sprintf("%d/%d", int(month), int(year))
+		// month := pullCreatedAt.Month()
+		// year := pullCreatedAt.Year()
+		// monthyear := fmt.Sprintf("%d/%d", int(month), int(year))
 
 		if pull.MergedAt != nil {
 			prs.TotalMerged++
-			merged = true
+			// merged = true
 		}
 
-		if monthYearPRStats[monthyear] == nil {
-			monthYearPRStats[monthyear] = &prStats{merged: 0, sent: 0}
-		}
-		if merged {
-			monthYearPRStats[monthyear].merged++
-		}
-		monthYearPRStats[monthyear].sent++
+		// if monthYearPRStats[monthyear] == nil {
+		// 	monthYearPRStats[monthyear] = &prStats{merged: 0, sent: 0}
+		// }
+		// if merged {
+		// 	monthYearPRStats[monthyear].merged++
+		// }
+		// monthYearPRStats[monthyear].sent++
 	}
 
 	// fmt.Println(monthYearPRStats)
